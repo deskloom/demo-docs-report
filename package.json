@@ -1,0 +1,14 @@
+{
+  "name": "demo-docs-report",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Google Docs API (batchUpdate) で見積書ドキュメントを自動生成するデモ（架空データ）。",
+  "type": "module",
+  "scripts": {
+    "test": "node --test *.test.mjs",
+    "generate": "node cli.mjs"
+  },
+  "dependencies": {
+    "googleapis": "^178.1.1"
+  }
+}

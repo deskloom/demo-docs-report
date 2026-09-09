@@ -1,0 +1,12 @@
+{
+  "clientName": "架空商事株式会社",
+  "title": "Webサイトリニューアル一式",
+  "issueDate": "2026-09-10",
+  "taxRate": 0.1,
+  "items": [
+    { "name": "トップページデザイン制作", "qty": 1, "unitPrice": 80000 },
+    { "name": "下層ページ制作（5ページ）", "qty": 5, "unitPrice": 15000 },
+    { "name": "レスポンシブ対応", "qty": 1, "unitPrice": 30000 },
+    { "name": "お問い合わせフォーム実装", "qty": 1, "unitPrice": 20000 }
+  ]
+}
