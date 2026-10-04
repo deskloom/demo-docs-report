@@ -1,7 +1,7 @@
 # 見積書自動生成デモ（Google Docs API・架空データ）
 
 架空の見積データ（クライアント名・品目・数量・単価）から、Google Docsの見積書を自動生成するCLIデモ。
-**すべて架空データ**で検証した自主制作例で、顧客案件としては表現しない。
+業務で受託した案件ではなく、**すべて架空データ**で作成した自主制作のサンプルです。
 
 ## 何を実装したか
 
@@ -14,25 +14,45 @@
 - **OAuth 2.0（ループバック方式）認証**: 個人のGoogleアカウントで新規ファイルを作成するには
   OAuthが必須（サービスアカウントはDriveの保存容量を持たず`documents.create`が403になる。
   実機で確認済み）。`auth-setup.mjs`で初回のみブラウザ許可を行い、以降は`token.json`の
-  refresh_tokenで無人実行できる。
+  refresh_tokenで無人実行できる。ただし、OAuth同意画面の公開ステータスが「テスト」のままだと
+  refresh_tokenは7日で失効する（Google公式ドキュメントの記載）。長期運用する場合はアプリを
+  本番環境に公開するか、週に1回`auth-setup.mjs`を再実行する。
 
 ## 動作確認方法
 
 コードレビューだけでなく、実際にAPIを呼んで検証している。
 
+前提: **Node.js 21 以上**（`npm test`の`node --test *.test.mjs`のため）。
+
+### Google Cloud側の準備（初回のみ）
+
+これらを済ませないと、`403 ... API has not been used in project`や`access_denied`になります。
+
+1. [Google Cloud Console](https://console.cloud.google.com/)でプロジェクトを作成（または既存のものを選択）する。
+2. 同じプロジェクトで**Google Docs API**と**Google Drive API**を有効化する（「APIとサービス」→ライブラリ）。
+3. **OAuth同意画面**を設定する（コンソール上では「Google Auth Platform」として案内される場合があります）。
+   ユーザーの種類は「外部」、公開ステータスは「テスト」のままでよく、**テストユーザーに自分のGoogleアカウントを追加**する。
+4. 認証情報から**OAuthクライアントID**を作成する。アプリケーションの種類は「デスクトップアプリ」。
+   作成後にJSONをダウンロードし、このディレクトリ直下に`oauth-client.json`という名前で保存する。
+5. 要求するスコープは`https://www.googleapis.com/auth/documents`と`https://www.googleapis.com/auth/drive.file`
+   （`lib/docsClient.mjs`の`SCOPES`）。許可画面でこの2つに同意する。
+
+`oauth-client.json`と`token.json`は認証情報なのでコミットしないこと。
+
 ```bash
 npm install
-# 初回のみ: OAuthクライアント（Google Cloud Console「デスクトップアプリ」種別）を
-#   oauth-client.json として配置し、以下を実行してブラウザで一度だけ許可する
-node auth-setup.mjs
+node auth-setup.mjs   # 初回のみ。表示されたURLをブラウザで開いて許可する（token.jsonが作られる）
 
 npm test              # モック単体テスト（node:test、APIコストなし）
 node smoke-test.mjs   # 実際にGoogle Docsを1通生成し、内容を検証する
 node cli.mjs [入力JSON] [共有先メールアドレス（任意）]
 ```
 
+注意: `smoke-test.mjs`は実行のたびに見積書ドキュメントを1通作成し、削除しません。
+実行した分だけ、自分のGoogleドライブにドキュメントが残るので、不要なら手動で削除してください。
+
 `npm test`（9件）が確認する内容:
-- 小計・消費税（四捨五入）・合計の計算（0件時のNaN防止を含む）
+- 小計・消費税（四捨五入）・合計の計算（品目が空の場合は合計¥0になる）
 - ヘッダーテキストの見出し範囲が「御見積書」の文字数と正確に一致すること
 - テーブルの行数（ヘッダー1+明細N+空白1+小計/税/合計3）
 - セルへの挿入テキストの内容（品目名・金額のフォーマット `¥12,345`）
