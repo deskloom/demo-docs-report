@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { makeAuth, makeClients } from './lib/docsClient.mjs';
+import { makeAuth, makeClients, explainGoogleError } from './lib/docsClient.mjs';
+import { validateQuote } from './lib/quote.mjs';
 import { generateQuoteDoc } from './lib/generateQuote.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -11,6 +12,7 @@ async function main() {
   const shareEmail = process.argv[3] ?? null;
   const quote = JSON.parse(fs.readFileSync(inputFile, 'utf8'));
 
+  validateQuote(quote); // API呼び出し前に入力を検証（不正ならここで終了）
   const auth = makeAuth();
   const { docs, drive } = await makeClients(auth);
   const result = await generateQuoteDoc({ docs, drive, quote, shareEmail });
@@ -20,6 +22,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('ERROR:', err.message);
+  console.error('ERROR:', explainGoogleError(err).message);
   process.exit(1);
 });

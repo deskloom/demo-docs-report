@@ -10,5 +10,8 @@
   },
   "dependencies": {
     "googleapis": "^178.1.1"
+  },
+  "engines": {
+    "node": ">=21"
   }
 }
